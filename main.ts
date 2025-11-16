@@ -8,6 +8,8 @@ export default class CuriePlugin extends Plugin
 {
 	settings: CurieSettings;
 	syncEngine: CurieSyncEngine;
+	statusBarItem: HTMLElement;
+
 
 	async onload()
 	{
@@ -20,6 +22,10 @@ export default class CuriePlugin extends Plugin
 
 		// Initialize sync engine
 		this.syncEngine = new CurieSyncEngine(this.app, this);
+
+		// Status Bar Item
+		this.statusBarItem = this.addStatusBarItem();
+		this.statusBarItem.setText("Curie: Idle");
 
 		// Register file events
 		this.registerEvent(this.app.vault.on("modify", (file: TFile) =>
@@ -56,5 +62,27 @@ export default class CuriePlugin extends Plugin
 	async saveSettings()
 	{
 		await this.saveData(this.settings);
+	}
+
+
+	// Status Bar Updates
+	setStatusIdle()
+	{
+		this.statusBarItem.setText("Curie: Idle ⚪");
+	}
+
+	setStatusSyncing()
+	{
+		this.statusBarItem.setText("Curie: Syncing 🟡");
+	}
+
+	setStatusConnected()
+	{
+		this.statusBarItem.setText("Curie: Connected 🟢");
+	}
+
+	setStatusError()
+	{
+		this.statusBarItem.setText("Curie: Error 🔴");
 	}
 }

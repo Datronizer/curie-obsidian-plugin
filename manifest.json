@@ -1,7 +1,7 @@
 {
   "id": "project-curie-sync",
   "name": "Project Curie Sync",
-  "version": "0.0.1-alpha",
+  "version": "0.2.0",
   "description": "Sync your Obsidian vault with a Project Curie virtual vault via Fastify backend.",
   "author": "Sienna Truong",
   "authorUrl": "",

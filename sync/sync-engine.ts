@@ -2,6 +2,7 @@ import { App, TFile } from "obsidian";
 import CuriePlugin from "../main";
 import { CurieApiClient } from "../api/client";
 import { hashString } from "../util/hashing";
+import { toastSuccess } from "util/toast";
 
 export class CurieSyncEngine
 {
@@ -40,6 +41,7 @@ export class CurieSyncEngine
 
             this.plugin.settings.deviceId = res.id;
             await this.plugin.saveSettings();
+            toastSuccess("Curie device registered");
         }
     }
 
@@ -53,6 +55,7 @@ export class CurieSyncEngine
                 deviceId: this.plugin.settings.deviceId
             });
 
+            this.plugin.setStatusConnected();
             this.lastHeartbeat = new Date().toLocaleTimeString();
         }, 10000);
     }
@@ -61,6 +64,7 @@ export class CurieSyncEngine
     async fullSync()
     {
         // For now just update lastSync, we will implement properly later
+        this.plugin.setStatusConnected();
         this.lastSync = new Date().toLocaleTimeString();
     }
 
@@ -69,6 +73,8 @@ export class CurieSyncEngine
      */
     async onLocalFileModified(file: TFile)
     {
+        this.plugin.setStatusSyncing();
+
         const vaultId = this.plugin.settings.vaultId;
         const deviceId = this.plugin.settings.deviceId;
 
@@ -88,6 +94,7 @@ export class CurieSyncEngine
         if (diff.action === "pull")
         {
             // Download file from server later if needed
+            
             return;
         }
 
