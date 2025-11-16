@@ -6,3 +6,11 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+.curie-ribbon-icon svg {
+    stroke: var(--text-accent);
+}
+
+.modal-content button {
+    margin: 8px 0;
+    padding: 6px 12px;
+}
