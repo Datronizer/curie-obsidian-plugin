@@ -13,7 +13,7 @@ export default class CuriePlugin extends Plugin
 
 	async onload()
 	{
-		console.log("Loading Project Curie Sync Plugin");
+		console.log("Loading Curie Plugin");
 
 		await this.loadSettings();
 
@@ -33,13 +33,51 @@ export default class CuriePlugin extends Plugin
 			this.syncEngine.onLocalFileModified(file);
 		}));
 
+		// Hovers
+		this.registerHoverLinkSource("curie-hover", {
+			display: "Curie File Hover",
+			defaultMod: true,
+		});
+		this.registerEvent(
+			(this.app.workspace as any).on("hover-link", async (event: any) =>
+			{
+				const { source, hoverParent, targetEl, linktext } = event;
+
+				// We only care about file explorer hovers
+				if (source !== "file-explorer") return;
+
+				// Fetch file metadata
+				const file = this.app.vault.getAbstractFileByPath(linktext);
+				if (!file || !(file instanceof TFile)) return;
+
+				// Override hover contents
+				const hoverPopover = event.hoverPopover;
+				const container = hoverPopover.hoverEl;
+
+				container.empty();
+
+				container.createEl("h4", { text: `Curie File Info` });
+				container.createEl("p", { text: `Path: ${file.path}` });
+				container.createEl("p", { text: `Last Modified: ${new Date(file.stat.mtime).toLocaleString()}` });
+
+				// You can add anything here:
+				// - Custom icons
+				// - File preview
+				// - Sync status
+				// - Vault metadata
+				// - Buttons (Open, Sync Now, Compare, etc.)
+			})
+		);
+
+
+
 		// Start heartbeat + periodic sync
 		this.syncEngine.start();
 
 
 		const ribbonIconEl = this.addRibbonIcon(
 			"cloud",
-			"Project Curie Sync",
+			"Curie",
 			() =>
 			{
 				new CurieDashboardModal(this.app, this).open();
@@ -50,7 +88,7 @@ export default class CuriePlugin extends Plugin
 
 	onunload()
 	{
-		console.log("Unloading Project Curie Sync Plugin");
+		console.log("Unloading Curie Plugin");
 		this.syncEngine.stop();
 	}
 

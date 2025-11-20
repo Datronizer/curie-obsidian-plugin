@@ -1,8 +1,8 @@
 import { App, TFile } from "obsidian";
 import CuriePlugin from "../main";
-import { CurieApiClient } from "../api/client";
+import { CurieApiClient, Server } from "../api/client";
 import { hashString } from "../util/hashing";
-import { toastSuccess } from "util/toast";
+// import { toastSuccess } from "util/toast";
 
 export class CurieSyncEngine
 {
@@ -15,7 +15,9 @@ export class CurieSyncEngine
 
     constructor(private app: App, private plugin: CuriePlugin)
     {
-        this.api = new CurieApiClient(plugin.settings.apiBaseUrl);
+        this.api = new CurieApiClient(
+            new Server(plugin.settings.apiBaseUrl)
+        );
     }
 
 
@@ -35,13 +37,11 @@ export class CurieSyncEngine
     {
         if (!this.plugin.settings.deviceId)
         {
-            const res = await this.api.post<{ id: string }>("/devices/register", {
-                name: "Obsidian Desktop"
-            });
+            const res = await this.api.registerDevice("Obsidian Desktop");
 
             this.plugin.settings.deviceId = res.id;
             await this.plugin.saveSettings();
-            toastSuccess("Curie device registered");
+            // toastSuccess("Curie device registered");
         }
     }
 
@@ -51,9 +51,7 @@ export class CurieSyncEngine
         {
             if (!this.plugin.settings.deviceId) return;
 
-            await this.api.post("/devices/heartbeat", {
-                deviceId: this.plugin.settings.deviceId
-            });
+            await this.api.sendHeartbeat(this.plugin.settings.deviceId);
 
             this.plugin.setStatusConnected();
             this.lastHeartbeat = new Date().toLocaleTimeString();
@@ -66,6 +64,8 @@ export class CurieSyncEngine
         // For now just update lastSync, we will implement properly later
         this.plugin.setStatusConnected();
         this.lastSync = new Date().toLocaleTimeString();
+
+        console.log("Full sync triggered");
     }
 
     /**
@@ -83,26 +83,30 @@ export class CurieSyncEngine
         const content = await this.app.vault.read(file);
         const hash = await hashString(content);
 
-        const diff = await this.api.post<{ action: "noop" | "pull" | "push" }>("/sync/diff", {
+        const diff = await this.api.getDiff(
             deviceId,
-            fileId: file.path, // for alpha, we treat path as id
-            clientHash: hash
-        });
+            vaultId,
+            file.path,
+            hash
+        );
+        console.log("Diff for file", file.path, ":", diff);
 
         if (diff.action === "noop") return;
 
         if (diff.action === "pull")
         {
             // Download file from server later if needed
-            
+
             return;
         }
 
         // PUSH
-        await this.api.post(`/vaults/${vaultId}/files`, {
-            path: file.path,
+        console.log("Pushing file", file.path, content, hash);
+        await this.api.upsertFile(
+            vaultId,
+            file.path,
             content,
             hash
-        });
+        );
     }
 }
