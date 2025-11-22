@@ -1,5 +1,6 @@
 import { requestUrl } from "obsidian";
 import { VaultDto } from "./dtos/vault";
+import { DeviceDto } from "./dtos/device.dto";
 
 export class CurieApiClient
 {
@@ -14,6 +15,11 @@ export class CurieApiClient
 
 
     //#region Vault Operations
+    async getVaultList(): Promise<VaultDto[]>
+    {
+        return await this.server.get(`/vaults/`);
+    }
+
     async getVaultInfo(vaultId: string): Promise<VaultDto>
     {
         return await this.server.get(`/vaults/${vaultId}`);
@@ -29,7 +35,7 @@ export class CurieApiClient
     //#region Sync Operations
     async getDiff(deviceId: string, vaultId: string, filePath: string, clientHash: string): Promise<{ action: "noop" | "pull" | "push" }>
     {
-        return await this.server.post(`/sync/diff`, { 
+        return await this.server.post(`/sync/diff`, {
             deviceId,
             vaultId,
             path: filePath,
@@ -40,9 +46,9 @@ export class CurieApiClient
 
 
     //#region Heartbeat
-    async sendHeartbeat(deviceId: string): Promise<void>
+    async sendHeartbeat(deviceId: string): Promise<DeviceDto>
     {
-        await this.server.post("/devices/heartbeat", { deviceId });
+        return await this.server.post("/devices/heartbeat", { deviceId });
     }
     //#endregion
 
@@ -86,6 +92,7 @@ export class Server
             body: JSON.stringify(body),
             headers: { "Content-Type": "application/json" }
         });
+        console.log(res);
 
         return res.json as T;
     }
@@ -108,7 +115,9 @@ export class Server
             url: `${this.baseUrl}${path}`,
             method: "GET"
         });
+        console.log(res)
 
         return res.json as T;
     }
+    //9f0cfcc8-da3e-4a0a-a485-11f8c9378264
 }

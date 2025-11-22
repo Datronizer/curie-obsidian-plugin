@@ -1,6 +1,7 @@
 import { App, Modal } from "obsidian";
 import CuriePlugin from "../main";
 import { formatDuration, timeAgoInMs } from "../util/time";
+import { VaultDto } from "api/dtos/vault";
 
 export class CurieDashboardModal extends Modal
 {
@@ -55,9 +56,47 @@ export class CurieDashboardModal extends Modal
         }
         else
         {
+            let vaultList: VaultDto[] = [];
+            this.plugin.syncEngine.api.getVaultList()
+                .then((vaultList) =>
+                {
+                    vaultList = vaultList;
+                })
+                .catch((err) =>
+                {
+                    contentEl.createEl("p", { text: "Failed to fetch vault list from server." });
+                });
+
             contentEl.createEl("p", { text: "Vault Info from Server: N/A (No Vault ID configured)" });
             contentEl.createEl("br");
             contentEl.createEl("p", { text: "You need to create a vault on the server before syncing." });
+            contentEl.createEl("p", { text: "Or you can choose an existing vault by choosing one below:" });
+
+            contentEl.createEl("table", undefined, (tableEl: any) =>
+            {
+                const headerRow = tableEl.createEl("tr");
+                headerRow.createEl("th", { text: "Vault ID" });
+                headerRow.createEl("th", { text: "Vault Name" });
+                headerRow.createEl("th", { text: "Created At" });
+                headerRow.createEl("th", { text: "Select" });
+
+                for (const vault of vaultList)
+                {
+                    const row = tableEl.createEl("tr");
+                    row.createEl("td", { text: vault.id });
+                    row.createEl("td", { text: vault.name });
+                    row.createEl("td", { text: new Date(vault.createdAt).toLocaleString() });
+                    const selectCell = row.createEl("td");
+                    const selectButton = selectCell.createEl("button", { text: "Select" });
+                    selectButton.onclick = async () =>
+                    {
+                        this.plugin.settings.vaultId = vault.id;
+                        await this.plugin.saveSettings();
+                        contentEl.createEl("p", { text: `Selected vault "${vault.name}" with ID: ${vault.id}` });
+                    };
+                }
+            });
+
             contentEl.createEl("br");
             contentEl.createEl("input", { type: "text", placeholder: "Enter Vault Name" });
             const btnCreateVault = contentEl.createEl("button", { text: "Create Vault" });

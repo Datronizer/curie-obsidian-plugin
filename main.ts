@@ -33,41 +33,41 @@ export default class CuriePlugin extends Plugin
 			this.syncEngine.onLocalFileModified(file);
 		}));
 
-		// Hovers
-		this.registerHoverLinkSource("curie-hover", {
-			display: "Curie File Hover",
-			defaultMod: true,
-		});
-		this.registerEvent(
-			(this.app.workspace as any).on("hover-link", async (event: any) =>
-			{
-				const { source, hoverParent, targetEl, linktext } = event;
+		// // Hovers
+		// this.registerHoverLinkSource("curie-hover", {
+		// 	display: "Curie File Hover",
+		// 	defaultMod: true,
+		// });
+		// this.registerEvent(
+		// 	(this.app.workspace as any).on("hover-link", async (event: any) =>
+		// 	{
+		// 		const { source, hoverParent, targetEl, linktext } = event;
 
-				// We only care about file explorer hovers
-				if (source !== "file-explorer") return;
+		// 		// We only care about file explorer hovers
+		// 		if (source !== "file-explorer") return;
 
-				// Fetch file metadata
-				const file = this.app.vault.getAbstractFileByPath(linktext);
-				if (!file || !(file instanceof TFile)) return;
+		// 		// Fetch file metadata
+		// 		const file = this.app.vault.getAbstractFileByPath(linktext);
+		// 		if (!file || !(file instanceof TFile)) return;
 
-				// Override hover contents
-				const hoverPopover = event.hoverPopover;
-				const container = hoverPopover.hoverEl;
+		// 		// Override hover contents
+		// 		const hoverPopover = event.hoverPopover;
+		// 		const container = hoverPopover.hoverEl;
 
-				container.empty();
+		// 		container.empty();
 
-				container.createEl("h4", { text: `Curie File Info` });
-				container.createEl("p", { text: `Path: ${file.path}` });
-				container.createEl("p", { text: `Last Modified: ${new Date(file.stat.mtime).toLocaleString()}` });
+		// 		container.createEl("h4", { text: `Curie File Info` });
+		// 		container.createEl("p", { text: `Path: ${file.path}` });
+		// 		container.createEl("p", { text: `Last Modified: ${new Date(file.stat.mtime).toLocaleString()}` });
 
-				// You can add anything here:
-				// - Custom icons
-				// - File preview
-				// - Sync status
-				// - Vault metadata
-				// - Buttons (Open, Sync Now, Compare, etc.)
-			})
-		);
+		// 		// You can add anything here:
+		// 		// - Custom icons
+		// 		// - File preview
+		// 		// - Sync status
+		// 		// - Vault metadata
+		// 		// - Buttons (Open, Sync Now, Compare, etc.)
+		// 	})
+		// );
 
 
 
