@@ -1,16 +1,74 @@
-/*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
 .curie-ribbon-icon svg {
     stroke: var(--text-accent);
 }
 
-.modal-content button {
-    margin: 8px 0;
+.curie-status-header {
+    margin-bottom: 16px;
+}
+
+.curie-status-badge {
+    display: inline-block;
     padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 0.9em;
+    font-weight: 500;
+    background-color: var(--background-secondary-alt);
+    color: var(--text-normal);
+}
+
+.curie-status-connected {
+    background-color: rgba(46, 160, 67, 0.15);
+    color: var(--text-success, #2ea043);
+    border: 1px solid rgba(46, 160, 67, 0.3);
+}
+
+.curie-status-offline {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: var(--text-error, #f85149);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+}
+
+.curie-badge-disconnected {
+    background-color: var(--background-modifier-border);
+    color: var(--text-muted);
+}
+
+.curie-summary-card {
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+.curie-summary-card p {
+    margin: 6px 0;
+}
+
+.curie-subtle-id {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    word-break: break-all;
+}
+
+.curie-modal-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.curie-sync-feedback {
+    margin-top: 12px;
+}
+
+.curie-switch-vault-section {
+    margin-top: 16px;
+    padding-top: 8px;
+}
+
+.curie-progress-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
 }

@@ -1,19 +1,55 @@
 import { requestUrl } from "obsidian";
 import { VaultDto } from "./dtos/vault";
+import { DeviceDto } from "./dtos/device.dto";
 
 export class CurieApiClient
 {
     constructor(private server: Server) { }
 
-    //#region Device Operations
-    async registerDevice(name: string): Promise<{ id: string }>
+    setToken(token: string | null)
     {
-        return await this.server.post("/devices/register", { name });
+        this.server.setToken(token);
+    }
+
+    setBaseUrl(url: string)
+    {
+        this.server.setBaseUrl(url);
+    }
+
+    //#region Auth Operations
+    async login(
+        email: string,
+        password: string,
+        deviceName?: string
+    ): Promise<{
+        user: { id: string; name: string; email: string };
+        device: { id: string; name: string; token: string };
+        vaults: Array<{ id: string; name: string }>;
+    }>
+    {
+        return await this.server.post("/auth/login", { email, password, deviceName });
     }
     //#endregion
 
+    //#region Device Operations
+    async registerDevice(name: string, setupKey?: string): Promise<{ id: string; token: string }>
+    {
+        const headers: Record<string, string> = {};
+        if (setupKey)
+        {
+            headers["x-setup-key"] = setupKey;
+        }
+
+        return await this.server.post("/devices/register", { name }, headers);
+    }
+    //#endregion
 
     //#region Vault Operations
+    async getVaultList(): Promise<VaultDto[]>
+    {
+        return await this.server.get(`/vaults/`);
+    }
+
     async getVaultInfo(vaultId: string): Promise<VaultDto>
     {
         return await this.server.get(`/vaults/${vaultId}`);
@@ -25,42 +61,66 @@ export class CurieApiClient
     }
     //#endregion
 
-
     //#region Sync Operations
-    async getDiff(deviceId: string, vaultId: string, filePath: string, clientHash: string): Promise<{ action: "noop" | "pull" | "push" }>
+    async getDiff(
+        deviceId: string,
+        vaultId: string,
+        filePath: string,
+        clientHash: string
+    ): Promise<{ action: "noop" | "pull" | "push" | "conflict"; serverHash?: string }>
     {
-        return await this.server.post(`/sync/diff`, { 
+        return await this.server.post(`/sync/diff`, {
             deviceId,
             vaultId,
             path: filePath,
-            clientHash
+            clientHash,
         });
     }
     //#endregion
 
-
     //#region Heartbeat
-    async sendHeartbeat(deviceId: string): Promise<void>
+    async sendHeartbeat(deviceId: string): Promise<DeviceDto>
     {
-        await this.server.post("/devices/heartbeat", { deviceId });
+        return await this.server.post("/devices/heartbeat", { deviceId });
     }
     //#endregion
 
-
-    //#region File Operations
-    async getFileHash(fileId: string): Promise<{ hash: string }>
+    //#region File Content Operations
+    async downloadFileContent(vaultId: string, path: string): Promise<{ content: string; hash?: string }>
     {
-        return await this.server.get(`/files/${fileId}/hash`);
+        const encodedPath = encodeURIComponent(path);
+        const res = await requestUrl({
+            url: `${this.server.getBaseUrl()}/vaults/${vaultId}/content?path=${encodedPath}`,
+            method: "GET",
+            headers: this.server.getAuthHeaders(),
+        });
+
+        return {
+            content: res.text,
+            hash: res.headers["x-curie-hash"],
+        };
     }
 
-    async uploadFile(fileId: string, content: ArrayBuffer): Promise<void>
+    async uploadFileContent(
+        vaultId: string,
+        path: string,
+        content: string,
+        isConflict: boolean = false
+    ): Promise<{ hash: string; size: number; conflictCopyPath?: string }>
     {
-        await this.server.post(`/files/${fileId}/upload`, { content });
-    }
+        const encodedPath = encodeURIComponent(path);
+        const conflictFlag = isConflict ? "&conflict=true" : "";
+        const res = await requestUrl({
+            url: `${this.server.getBaseUrl()}/vaults/${vaultId}/content?path=${encodedPath}${conflictFlag}`,
+            method: "PUT",
+            body: content,
+            headers: {
+                ...this.server.getAuthHeaders(),
+                "Content-Type": "text/markdown",
+            },
+        });
 
-    async downloadFile(fileId: string): Promise<{ content: ArrayBuffer }>
-    {
-        return await this.server.get(`/files/${fileId}/download`);
+        return res.json;
     }
 
     async upsertFile(vaultId: string, path: string, content: string, hash: string): Promise<void>
@@ -68,7 +128,7 @@ export class CurieApiClient
         await this.server.put(`/vaults/${vaultId}/files/`, {
             path,
             content,
-            hash
+            hash,
         });
     }
     //#endregion
@@ -76,15 +136,47 @@ export class CurieApiClient
 
 export class Server
 {
+    private token: string | null = null;
+
     constructor(private baseUrl: string) { }
 
-    async post<T>(path: string, body: any): Promise<T>
+    setToken(token: string | null)
     {
+        this.token = token;
+    }
+
+    setBaseUrl(url: string)
+    {
+        this.baseUrl = url.replace(/\/+$/, "");
+    }
+
+    getBaseUrl(): string
+    {
+        return this.baseUrl.replace(/\/+$/, "");
+    }
+
+    getAuthHeaders(): Record<string, string>
+    {
+        const headers: Record<string, string> = {};
+        if (this.token)
+        {
+            headers["Authorization"] = `Bearer ${this.token}`;
+        }
+        return headers;
+    }
+
+    async post<T>(path: string, body: any, customHeaders: Record<string, string> = {}): Promise<T>
+    {
+        const cleanPath = path.startsWith("/") ? path : `/${path}`;
         const res = await requestUrl({
-            url: `${this.baseUrl}${path}`,
+            url: `${this.getBaseUrl()}${cleanPath}`,
             method: "POST",
             body: JSON.stringify(body),
-            headers: { "Content-Type": "application/json" }
+            headers: {
+                "Content-Type": "application/json",
+                ...this.getAuthHeaders(),
+                ...customHeaders,
+            },
         });
 
         return res.json as T;
@@ -92,11 +184,15 @@ export class Server
 
     async put<T>(path: string, body: any): Promise<T>
     {
+        const cleanPath = path.startsWith("/") ? path : `/${path}`;
         const res = await requestUrl({
-            url: `${this.baseUrl}${path}`,
+            url: `${this.getBaseUrl()}${cleanPath}`,
             method: "PUT",
             body: JSON.stringify(body),
-            headers: { "Content-Type": "application/json" }
+            headers: {
+                "Content-Type": "application/json",
+                ...this.getAuthHeaders(),
+            },
         });
 
         return res.json as T;
@@ -104,9 +200,13 @@ export class Server
 
     async get<T>(path: string): Promise<T>
     {
+        const cleanPath = path.startsWith("/") ? path : `/${path}`;
         const res = await requestUrl({
-            url: `${this.baseUrl}${path}`,
-            method: "GET"
+            url: `${this.getBaseUrl()}${cleanPath}`,
+            method: "GET",
+            headers: {
+                ...this.getAuthHeaders(),
+            },
         });
 
         return res.json as T;

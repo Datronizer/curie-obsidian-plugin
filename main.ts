@@ -2,7 +2,8 @@ import { Plugin, TFile } from "obsidian";
 import { CurieSettings, DEFAULT_SETTINGS } from "./settings/settings";
 import { CurieSettingTab } from "./settings/settings-tab";
 import { CurieSyncEngine } from "./sync/sync-engine";
-import { CurieDashboardModal } from "sync/dashboard-model";
+import { CurieDashboardModal } from "./sync/dashboard-model";
+import { CurieOnboardingModal } from "./ui/onboarding-modal";
 
 export default class CuriePlugin extends Plugin
 {
@@ -33,46 +34,57 @@ export default class CuriePlugin extends Plugin
 			this.syncEngine.onLocalFileModified(file);
 		}));
 
-		// Hovers
-		this.registerHoverLinkSource("curie-hover", {
-			display: "Curie File Hover",
-			defaultMod: true,
-		});
-		this.registerEvent(
-			(this.app.workspace as any).on("hover-link", async (event: any) =>
+		// // Hovers
+		// this.registerHoverLinkSource("curie-hover", {
+		// 	display: "Curie File Hover",
+		// 	defaultMod: true,
+		// });
+		// this.registerEvent(
+		// 	(this.app.workspace as any).on("hover-link", async (event: any) =>
+		// 	{
+		// 		const { source, hoverParent, targetEl, linktext } = event;
+
+		// 		// We only care about file explorer hovers
+		// 		if (source !== "file-explorer") return;
+
+		// 		// Fetch file metadata
+		// 		const file = this.app.vault.getAbstractFileByPath(linktext);
+		// 		if (!file || !(file instanceof TFile)) return;
+
+		// 		// Override hover contents
+		// 		const hoverPopover = event.hoverPopover;
+		// 		const container = hoverPopover.hoverEl;
+
+		// 		container.empty();
+
+		// 		container.createEl("h4", { text: `Curie File Info` });
+		// 		container.createEl("p", { text: `Path: ${file.path}` });
+		// 		container.createEl("p", { text: `Last Modified: ${new Date(file.stat.mtime).toLocaleString()}` });
+
+		// 		// You can add anything here:
+		// 		// - Custom icons
+		// 		// - File preview
+		// 		// - Sync status
+		// 		// - Vault metadata
+		// 		// - Buttons (Open, Sync Now, Compare, etc.)
+		// 	})
+		// );
+
+
+
+		// Automatically prompt onboarding if credentials or vault are unconfigured
+		if (!this.settings.deviceToken || !this.settings.vaultId)
+		{
+			this.app.workspace.onLayoutReady(() =>
 			{
-				const { source, hoverParent, targetEl, linktext } = event;
-
-				// We only care about file explorer hovers
-				if (source !== "file-explorer") return;
-
-				// Fetch file metadata
-				const file = this.app.vault.getAbstractFileByPath(linktext);
-				if (!file || !(file instanceof TFile)) return;
-
-				// Override hover contents
-				const hoverPopover = event.hoverPopover;
-				const container = hoverPopover.hoverEl;
-
-				container.empty();
-
-				container.createEl("h4", { text: `Curie File Info` });
-				container.createEl("p", { text: `Path: ${file.path}` });
-				container.createEl("p", { text: `Last Modified: ${new Date(file.stat.mtime).toLocaleString()}` });
-
-				// You can add anything here:
-				// - Custom icons
-				// - File preview
-				// - Sync status
-				// - Vault metadata
-				// - Buttons (Open, Sync Now, Compare, etc.)
-			})
-		);
-
-
-
-		// Start heartbeat + periodic sync
-		this.syncEngine.start();
+				new CurieOnboardingModal(this.app, this).open();
+			});
+		}
+		else
+		{
+			// Start heartbeat + periodic sync
+			this.syncEngine.start();
+		}
 
 
 		const ribbonIconEl = this.addRibbonIcon(
@@ -117,6 +129,11 @@ export default class CuriePlugin extends Plugin
 	setStatusConnected()
 	{
 		this.statusBarItem.setText("Curie: Connected 🟢");
+	}
+
+	setStatusDisconnected()
+	{
+		this.statusBarItem.setText("Curie: Disconnected ⚪");
 	}
 
 	setStatusError()
