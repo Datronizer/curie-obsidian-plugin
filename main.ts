@@ -14,8 +14,6 @@ export default class CuriePlugin extends Plugin
 
 	async onload()
 	{
-		console.log("Loading Curie Plugin");
-
 		await this.loadSettings();
 
 		// UI Settings Tab
@@ -33,7 +31,7 @@ export default class CuriePlugin extends Plugin
 				this.statusBarItem.setText("Curie: Idle");
 			}
 		}
-		catch (err)
+		catch (_err)
 		{
 			// Status bar not available on mobile
 			this.statusBarItem = null;
@@ -42,7 +40,7 @@ export default class CuriePlugin extends Plugin
 		// Register file events
 		this.registerEvent(this.app.vault.on("modify", (file: TFile) =>
 		{
-			this.syncEngine.onLocalFileModified(file);
+			void this.syncEngine.onLocalFileModified(file);
 		}));
 
 		// // Hovers
@@ -94,7 +92,7 @@ export default class CuriePlugin extends Plugin
 		else
 		{
 			// Start heartbeat + periodic sync
-			this.syncEngine.start();
+			void this.syncEngine.start();
 		}
 
 
@@ -131,9 +129,10 @@ export default class CuriePlugin extends Plugin
 						await this.syncEngine.fullSync();
 						new Notice("Curie: Vault sync complete!");
 					}
-					catch (err: any)
+					catch (err: unknown)
 					{
-						new Notice(`Curie sync failed: ${err.message}`);
+						const msg = err instanceof Error ? err.message : String(err);
+						new Notice(`Curie sync failed: ${msg}`);
 					}
 				}
 				else
@@ -147,7 +146,6 @@ export default class CuriePlugin extends Plugin
 
 	onunload()
 	{
-		console.log("Unloading Curie Plugin");
 		this.syncEngine.stop();
 	}
 

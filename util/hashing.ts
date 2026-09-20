@@ -4,7 +4,9 @@ export async function hashString(text: string): Promise<string>
     const data = encoder.encode(text);
 
     const digest = await crypto.subtle.digest("SHA-256", data);
-    return Array.from(new Uint8Array(digest))
-        .map((b) => b.toString(16).padStart(2, "0"))
+    const hashArray = Array.from(new Uint8Array(digest));
+    const hashHex = hashArray
+        .map((b: number) => b.toString(16).padStart(2, "0"))
         .join("");
+    return hashHex;
 }

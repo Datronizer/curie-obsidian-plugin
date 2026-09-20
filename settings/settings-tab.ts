@@ -19,15 +19,15 @@ export class CurieSettingTab extends PluginSettingTab
 
         new Setting(containerEl)
             .setName("API Base URL")
-            .setDesc("The base URL of your Curie server")
+            .setDesc("The HTTP/HTTPS base URL of your self-hosted Project Curie server (e.g. http://localhost:3000 or https://curie.yourdomain.com)")
             .addText((text) =>
                 text
                     .setPlaceholder("http://localhost:3000")
                     .setValue(this.plugin.settings.apiBaseUrl)
-                    .onChange(async (value) =>
+                    .onChange((value) =>
                     {
                         this.plugin.settings.apiBaseUrl = value.trim();
-                        await this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 
@@ -38,10 +38,10 @@ export class CurieSettingTab extends PluginSettingTab
                 text
                     .setPlaceholder("Setup key")
                     .setValue(this.plugin.settings.setupKey)
-                    .onChange(async (value) =>
+                    .onChange((value) =>
                     {
                         this.plugin.settings.setupKey = value.trim();
-                        await this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
 
@@ -52,10 +52,10 @@ export class CurieSettingTab extends PluginSettingTab
                 text
                     .setPlaceholder("UUID of your Curie vault")
                     .setValue(this.plugin.settings.vaultId)
-                    .onChange(async (value) =>
+                    .onChange((value) =>
                     {
                         this.plugin.settings.vaultId = value.trim();
-                        await this.plugin.saveSettings();
+                        void this.plugin.saveSettings();
                     })
             );
     }

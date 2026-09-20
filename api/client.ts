@@ -120,7 +120,7 @@ export class CurieApiClient
             },
         });
 
-        return res.json;
+        return res.json as { hash: string; size: number; conflictCopyPath?: string };
     }
 
     async upsertFile(vaultId: string, path: string, content: string, hash: string): Promise<void>
@@ -165,7 +165,7 @@ export class Server
         return headers;
     }
 
-    async post<T>(path: string, body: any, customHeaders: Record<string, string> = {}): Promise<T>
+    async post<T>(path: string, body: unknown, customHeaders: Record<string, string> = {}): Promise<T>
     {
         const cleanPath = path.startsWith("/") ? path : `/${path}`;
         const res = await requestUrl({
@@ -182,7 +182,7 @@ export class Server
         return res.json as T;
     }
 
-    async put<T>(path: string, body: any): Promise<T>
+    async put<T>(path: string, body: unknown): Promise<T>
     {
         const cleanPath = path.startsWith("/") ? path : `/${path}`;
         const res = await requestUrl({

@@ -56,6 +56,16 @@ export class CurieOnboardingModal extends Modal
             cls: "curie-onboarding-desc",
         });
 
+        const serverHint = contentEl.createEl("p", {
+            cls: "curie-subtle-id",
+        });
+        serverHint.appendText("Requires a running, self-hosted Project Curie server (");
+        serverHint.createEl("a", {
+            text: "github.com/Datronizer/project-curie",
+            href: "https://github.com/Datronizer/project-curie",
+        });
+        serverHint.appendText(").");
+
         if (errorMessage)
         {
             const errorEl = contentEl.createEl("div", { cls: "curie-error-banner" });
@@ -158,10 +168,10 @@ export class CurieOnboardingModal extends Modal
                 this.availableVaults = res.vaults || [];
                 this.renderVaultResolutionStep();
             }
-            catch (err: any)
+            catch (err: unknown)
             {
                 console.error("[Curie Onboarding] Login failed:", err);
-                const msg = err.message || "Failed to sign in. Please verify your URL and credentials.";
+                const msg = err instanceof Error ? err.message : "Failed to sign in. Please verify your URL and credentials.";
                 this.renderLoginStep(msg);
             }
         };
@@ -196,13 +206,16 @@ export class CurieOnboardingModal extends Modal
                 cls: "mod-cta",
             });
 
-            connectBtn.onclick = async () =>
+            connectBtn.onclick = () =>
             {
                 connectBtn.disabled = true;
-                this.plugin.settings.vaultId = matchedVault.id;
-                this.plugin.settings.vaultName = matchedVault.name;
-                await this.plugin.saveSettings();
-                this.renderInitialSyncStep();
+                void (async () =>
+                {
+                    this.plugin.settings.vaultId = matchedVault.id;
+                    this.plugin.settings.vaultName = matchedVault.name;
+                    await this.plugin.saveSettings();
+                    this.renderInitialSyncStep();
+                })();
             };
 
             // Alternative: Choose different vault if desired
@@ -230,28 +243,32 @@ export class CurieOnboardingModal extends Modal
                 cls: "mod-cta",
             });
 
-            createBtn.onclick = async () =>
+            createBtn.onclick = () =>
             {
                 createBtn.disabled = true;
                 createBtn.setText("Adding vault...");
 
-                try
+                void (async () =>
                 {
-                    const newVault = await this.plugin.syncEngine.api.createVault(localVaultName);
-                    this.plugin.settings.vaultId = newVault.id;
-                    this.plugin.settings.vaultName = localVaultName;
-                    await this.plugin.saveSettings();
+                    try
+                    {
+                        const newVault = await this.plugin.syncEngine.api.createVault(localVaultName);
+                        this.plugin.settings.vaultId = newVault.id;
+                        this.plugin.settings.vaultName = localVaultName;
+                        await this.plugin.saveSettings();
 
-                    new Notice(`Vault "${localVaultName}" added to Curie!`);
-                    this.renderInitialSyncStep();
-                }
-                catch (err: any)
-                {
-                    console.error("[Curie Onboarding] Vault creation failed:", err);
-                    new Notice(`Failed to create vault: ${err.message}`);
-                    createBtn.disabled = false;
-                    createBtn.setText(`Add "${localVaultName}" to Curie`);
-                }
+                        new Notice(`Vault "${localVaultName}" added to Curie!`);
+                        this.renderInitialSyncStep();
+                    }
+                    catch (err: unknown)
+                    {
+                        const msg = err instanceof Error ? err.message : String(err);
+                        console.error("[Curie Onboarding] Vault creation failed:", err);
+                        new Notice(`Failed to create vault: ${msg}`);
+                        createBtn.disabled = false;
+                        createBtn.setText(`Add "${localVaultName}" to Curie`);
+                    }
+                })();
             };
 
             if (this.availableVaults.length > 0)
@@ -285,15 +302,18 @@ export class CurieOnboardingModal extends Modal
             })
             .addButton((btn) =>
             {
-                btn.setButtonText("Link Selected Vault").onClick(async () =>
+                btn.setButtonText("Link Selected Vault").onClick(() =>
                 {
-                    const selected = this.availableVaults.find((v) => v.id === selectedVaultId);
-                    if (!selected) return;
+                    void (async () =>
+                    {
+                        const selected = this.availableVaults.find((v) => v.id === selectedVaultId);
+                        if (!selected) return;
 
-                    this.plugin.settings.vaultId = selected.id;
-                    this.plugin.settings.vaultName = selected.name;
-                    await this.plugin.saveSettings();
-                    this.renderInitialSyncStep();
+                        this.plugin.settings.vaultId = selected.id;
+                        this.plugin.settings.vaultName = selected.name;
+                        await this.plugin.saveSettings();
+                        this.renderInitialSyncStep();
+                    })();
                 });
             });
     }
@@ -323,7 +343,6 @@ export class CurieOnboardingModal extends Modal
         });
         progressBar.value = 0;
         progressBar.max = 100;
-        progressBar.style.width = "100%";
 
         const actionContainer = contentEl.createEl("div", { cls: "curie-modal-buttons" });
 
@@ -360,14 +379,15 @@ export class CurieOnboardingModal extends Modal
             });
             doneBtn.onclick = () =>
             {
-                this.plugin.syncEngine.start();
+                void this.plugin.syncEngine.start();
                 this.close();
             };
         }
-        catch (err: any)
+        catch (err: unknown)
         {
             console.error("[Curie Onboarding] Initial sync error:", err);
-            statusText.setText(`⚠️ Initial sync encountered an issue: ${err.message}`);
+            const msg = err instanceof Error ? err.message : String(err);
+            statusText.setText(`⚠️ Initial sync encountered an issue: ${msg}`);
 
             const retryBtn = actionContainer.createEl("button", {
                 text: "Retry Sync",
@@ -375,7 +395,7 @@ export class CurieOnboardingModal extends Modal
             });
             retryBtn.onclick = () =>
             {
-                this.renderInitialSyncStep();
+                void this.renderInitialSyncStep();
             };
 
             const skipBtn = actionContainer.createEl("button", {
@@ -383,7 +403,7 @@ export class CurieOnboardingModal extends Modal
             });
             skipBtn.onclick = () =>
             {
-                this.plugin.syncEngine.start();
+                void this.plugin.syncEngine.start();
                 this.close();
             };
         }

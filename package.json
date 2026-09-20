@@ -1,7 +1,7 @@
 {
 	"name": "project-curie-sync",
-	"version": "0.3.0",
-	"description": "Sync your Obsidian vault with a Project Curie virtual vault via Fastify backend.",
+	"version": "0.3.1",
+	"description": "Sync notes with your self-hosted Project Curie server (github.com/Datronizer/project-curie).",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
@@ -15,7 +15,6 @@
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
-		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
 		"obsidian": "latest",
 		"tslib": "2.4.0",

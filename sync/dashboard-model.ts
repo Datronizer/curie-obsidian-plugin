@@ -84,8 +84,14 @@ export class CurieDashboardModal extends Modal
         });
         settingsBtn.onclick = () =>
         {
-            (this.app as any).setting?.open?.();
-            (this.app as any).setting?.openTabById?.(this.plugin.manifest.id);
+            const settingApp = this.app as App & {
+                setting?: {
+                    open?: () => void;
+                    openTabById?: (id: string) => void;
+                };
+            };
+            settingApp.setting?.open?.();
+            settingApp.setting?.openTabById?.(this.plugin.manifest.id);
             this.close();
         };
     }
@@ -147,7 +153,7 @@ export class CurieDashboardModal extends Modal
         });
 
         // Run live connectivity check
-        this.performLiveHealthCheck(statusBadge);
+        void this.performLiveHealthCheck(statusBadge);
 
         // Progress bar container for live sync feedback
         const syncFeedbackBox = contentEl.createEl("div", { cls: "curie-sync-feedback" });
@@ -171,7 +177,6 @@ export class CurieDashboardModal extends Modal
             });
             progressBar.value = 0;
             progressBar.max = 100;
-            progressBar.style.width = "100%";
 
             try
             {
@@ -192,10 +197,11 @@ export class CurieDashboardModal extends Modal
                 syncTextSpan.setText(this.plugin.syncEngine.lastSync || new Date().toLocaleTimeString());
                 new Notice("Curie: Vault sync completed!");
             }
-            catch (err: any)
+            catch (err: unknown)
             {
-                statusLine.setText(`⚠️ Sync error: ${err.message}`);
-                new Notice(`Curie sync failed: ${err.message}`);
+                const msg = err instanceof Error ? err.message : String(err);
+                statusLine.setText(`⚠️ Sync error: ${msg}`);
+                new Notice(`Curie sync failed: ${msg}`);
             }
             finally
             {
@@ -207,9 +213,9 @@ export class CurieDashboardModal extends Modal
         const switchVaultBtn = buttonContainer.createEl("button", {
             text: "Switch Vault",
         });
-        switchVaultBtn.onclick = async () =>
+        switchVaultBtn.onclick = () =>
         {
-            await this.renderSwitchVaultSection(contentEl);
+            void this.renderSwitchVaultSection(contentEl);
         };
 
         const disconnectBtn = buttonContainer.createEl("button", {
@@ -265,7 +271,7 @@ export class CurieDashboardModal extends Modal
             statusBadge.addClass("curie-status-connected");
             this.plugin.setStatusConnected();
         }
-        catch (err: any)
+        catch (_err: unknown)
         {
             statusBadge.setText("🔴 Offline (Server unreachable)");
             statusBadge.addClass("curie-status-offline");
@@ -327,9 +333,10 @@ export class CurieDashboardModal extends Modal
                     });
                 });
         }
-        catch (err: any)
+        catch (err: unknown)
         {
-            section.createEl("p", { text: `Failed to load vaults: ${err.message}` });
+            const msg = err instanceof Error ? err.message : String(err);
+            section.createEl("p", { text: `Failed to load vaults: ${msg}` });
         }
     }
 }

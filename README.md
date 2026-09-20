@@ -1,94 +1,60 @@
-# Obsidian Sample Plugin
+# Curie
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+Curie is a private, lightweight synchronization plugin designed to connect your vaults to your self-hosted **[Project Curie](https://github.com/Datronizer/project-curie)** backend.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+> [!IMPORTANT]
+> **Prerequisite: Self-Hosted Server**  
+> This plugin is not a standalone sync service. It is designed specifically to synchronize notes and attachments with a self-hosted instance of [Project Curie](https://github.com/Datronizer/project-curie), an open-source, filesystem-based hybrid datalake and metadata server. You will need a running Curie server instance to use this plugin.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+---
 
-## First time developing plugins?
+## Key Features
 
-Quick starting guide for new plugin devs:
+- **Self-Hosted & Private**: Your notes stay under your complete control on your own infrastructure.
+- **Transparent Filesystem Storage**: Notes on the server live as standard Markdown files and attachments in the filesystem—no database locks or proprietary formats.
+- **Bidirectional Background Sync**: Automatically tracks local modifications and synchronizes changes with the Curie server.
+- **Side-by-Side Conflict Preservation**: If concurrent edits collide across devices, Curie preserves both versions side-by-side (`Note (Conflict from <Device> <Time>).md`), preventing any data loss.
+- **Full Desktop & Mobile Support**: Runs natively on macOS, Windows, Linux, iOS, and Android.
+- **Touch-Friendly Controls**: Includes Mobile Quick Action and Mobile Toolbar commands (`Curie: Sync Vault Now`, `Curie: Open Curie Dashboard`).
+- **Connection Dashboard**: Inspect live connection status, account details, active vault association, and trigger manual syncs at any time.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+---
 
-## Releasing new releases
+## Quick Start
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
-
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## How to use
-
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint ./src/`
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+### 1. Deploy Your Curie Server
+Follow the setup instructions in the [Project Curie repository](https://github.com/Datronizer/project-curie) to launch your Fastify and SQLite backend:
+```bash
+git clone https://github.com/Datronizer/project-curie.git
+cd project-curie/server
+npm install
+npm run migrate
+npm run start
 ```
 
-If you have multiple URLs, you can also do:
+### 2. Install the Plugin
+- **From Community Plugins**: Search for **Curie** and click **Install**, then **Enable**.
+- **Manual Installation**: Download `main.js`, `manifest.json`, and `styles.css` from the latest [GitHub Release](https://github.com/Datronizer/curie-obsidian-plugin/releases) and place them in your vault at `.obsidian/plugins/project-curie-sync/`.
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+### 3. Connect to Your Server
+On first launch, the **Curie Onboarding** screen will automatically open:
+1. Enter your **Server URL** (e.g. `https://curie.yourdomain.com` or `http://localhost:3000`).
+2. Enter your Curie account **Email** and **Password**.
+3. Curie will automatically discover your remote vaults and match your current local vault, or offer to create a new remote vault with a single click.
+4. An initial bidirectional sync will run and your notes will stay seamlessly synchronized!
 
-## API Documentation
+---
 
-See https://github.com/obsidianmd/obsidian-api
+## Mobile Usage
+
+On iOS and Android:
+- Open the left sidebar or pull down for **Mobile Quick Actions** to open the **Curie Cloud Dashboard**.
+- You can add the command `Curie: Sync Vault Now` directly to your **Mobile Toolbar** in Obsidian settings for one-tap synchronization.
+
+---
+
+## Support & Issues
+
+For issues, questions, or contributions regarding the client plugin, please visit the [Curie Obsidian Plugin Issues](https://github.com/Datronizer/curie-obsidian-plugin/issues) page.
+
+For server-side questions and architecture details, see [Project Curie Server](https://github.com/Datronizer/project-curie).

@@ -38,7 +38,7 @@ export class CurieSyncEngine
 
     stop()
     {
-        if (this.interval) clearInterval(this.interval);
+        if (this.interval) window.clearInterval(this.interval);
         for (const timer of this.modifyTimeouts.values())
         {
             window.clearTimeout(timer);
@@ -71,7 +71,6 @@ export class CurieSyncEngine
                 this.api.setToken(res.token);
 
                 await this.plugin.saveSettings();
-                console.log("[Curie] Device registered successfully with token");
             }
             catch (err)
             {
@@ -145,7 +144,6 @@ export class CurieSyncEngine
 
             this.plugin.setStatusConnected();
             this.lastSync = new Date().toLocaleTimeString();
-            console.log("[Curie] Full sync completed at", this.lastSync);
         }
         catch (err)
         {
@@ -198,7 +196,6 @@ export class CurieSyncEngine
 
             if (diff.action === "pull")
             {
-                console.log("[Curie] Pulling newer version from server for:", file.path);
                 const { content: remoteContent } = await this.api.downloadFileContent(vaultId, file.path);
 
                 // Temporarily disable modification trigger while writing remote changes
@@ -216,13 +213,11 @@ export class CurieSyncEngine
 
             if (diff.action === "conflict")
             {
-                console.log("[Curie] Conflict detected for:", file.path, "Preserving both sides");
                 await this.api.uploadFileContent(vaultId, file.path, content, true);
                 return;
             }
 
             // PUSH
-            console.log("[Curie] Pushing file to server:", file.path);
             await this.api.uploadFileContent(vaultId, file.path, content, false);
         }
         catch (err)

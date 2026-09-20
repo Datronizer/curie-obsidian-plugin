@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v4
 
@@ -23,6 +25,14 @@ jobs:
           npm install
           npm run build
 
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
+
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -31,4 +41,5 @@ jobs:
           gh release delete "$tag" -y || true
           gh release create "$tag" \
             --title="$tag" \
+            --notes "Release $tag: Synchronization plugin for self-hosted Project Curie backend (https://github.com/Datronizer/project-curie)." \
             main.js manifest.json styles.css
