@@ -19,26 +19,42 @@ export class CurieSettingTab extends PluginSettingTab
 
         new Setting(containerEl)
             .setName("API Base URL")
+            .setDesc("The base URL of your Curie server")
             .addText((text) =>
                 text
-                    .setPlaceholder("http://your-vm:3000")
+                    .setPlaceholder("http://localhost:3000")
                     .setValue(this.plugin.settings.apiBaseUrl)
                     .onChange(async (value) =>
                     {
-                        this.plugin.settings.apiBaseUrl = value;
+                        this.plugin.settings.apiBaseUrl = value.trim();
+                        await this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("Setup Key")
+            .setDesc("Master setup key for registering this device")
+            .addText((text) =>
+                text
+                    .setPlaceholder("Setup key")
+                    .setValue(this.plugin.settings.setupKey)
+                    .onChange(async (value) =>
+                    {
+                        this.plugin.settings.setupKey = value.trim();
                         await this.plugin.saveSettings();
                     })
             );
 
         new Setting(containerEl)
             .setName("Vault ID")
+            .setDesc("UUID of your Curie vault")
             .addText((text) =>
                 text
                     .setPlaceholder("UUID of your Curie vault")
                     .setValue(this.plugin.settings.vaultId)
                     .onChange(async (value) =>
                     {
-                        this.plugin.settings.vaultId = value;
+                        this.plugin.settings.vaultId = value.trim();
                         await this.plugin.saveSettings();
                     })
             );

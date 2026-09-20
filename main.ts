@@ -2,7 +2,8 @@ import { Plugin, TFile } from "obsidian";
 import { CurieSettings, DEFAULT_SETTINGS } from "./settings/settings";
 import { CurieSettingTab } from "./settings/settings-tab";
 import { CurieSyncEngine } from "./sync/sync-engine";
-import { CurieDashboardModal } from "sync/dashboard-model";
+import { CurieDashboardModal } from "./sync/dashboard-model";
+import { CurieOnboardingModal } from "./ui/onboarding-modal";
 
 export default class CuriePlugin extends Plugin
 {
@@ -71,8 +72,19 @@ export default class CuriePlugin extends Plugin
 
 
 
-		// Start heartbeat + periodic sync
-		this.syncEngine.start();
+		// Automatically prompt onboarding if credentials or vault are unconfigured
+		if (!this.settings.deviceToken || !this.settings.vaultId)
+		{
+			this.app.workspace.onLayoutReady(() =>
+			{
+				new CurieOnboardingModal(this.app, this).open();
+			});
+		}
+		else
+		{
+			// Start heartbeat + periodic sync
+			this.syncEngine.start();
+		}
 
 
 		const ribbonIconEl = this.addRibbonIcon(
@@ -117,6 +129,11 @@ export default class CuriePlugin extends Plugin
 	setStatusConnected()
 	{
 		this.statusBarItem.setText("Curie: Connected 🟢");
+	}
+
+	setStatusDisconnected()
+	{
+		this.statusBarItem.setText("Curie: Disconnected ⚪");
 	}
 
 	setStatusError()
