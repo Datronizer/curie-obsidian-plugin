@@ -1,4 +1,4 @@
-import { App, Modal, Setting, Notice } from "obsidian";
+import { App, Modal, Setting, Notice, Platform } from "obsidian";
 import CuriePlugin from "../main";
 
 interface RemoteVault
@@ -21,7 +21,15 @@ export class CurieOnboardingModal extends Modal
         super(app);
         this.plugin = plugin;
         this.serverUrl = plugin.settings.apiBaseUrl || "http://localhost:3000";
-        this.deviceName = `Obsidian - ${app.vault.getName()}`;
+
+        const platformLabel = Platform.isIosApp
+            ? "Obsidian iOS"
+            : Platform.isAndroidApp
+            ? "Obsidian Android"
+            : Platform.isMacOS
+            ? "Obsidian macOS"
+            : "Obsidian Desktop";
+        this.deviceName = `${platformLabel} (${app.vault.getName()})`;
     }
 
     onOpen()

@@ -72,3 +72,27 @@
     height: 8px;
     border-radius: 4px;
 }
+
+/* Mobile Optimizations */
+.is-mobile .curie-modal-buttons {
+    flex-direction: column;
+    gap: 10px;
+}
+
+.is-mobile .curie-modal-buttons button {
+    width: 100%;
+    min-height: 44px;
+    font-size: 1em;
+    padding: 10px 16px;
+}
+
+.is-mobile .curie-summary-card {
+    padding: 12px;
+}
+
+.is-mobile .curie-status-badge {
+    display: block;
+    text-align: center;
+    width: 100%;
+    padding: 8px 12px;
+}

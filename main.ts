@@ -1,4 +1,4 @@
-import { Plugin, TFile } from "obsidian";
+import { Plugin, TFile, Notice } from "obsidian";
 import { CurieSettings, DEFAULT_SETTINGS } from "./settings/settings";
 import { CurieSettingTab } from "./settings/settings-tab";
 import { CurieSyncEngine } from "./sync/sync-engine";
@@ -9,7 +9,7 @@ export default class CuriePlugin extends Plugin
 {
 	settings: CurieSettings;
 	syncEngine: CurieSyncEngine;
-	statusBarItem: HTMLElement;
+	statusBarItem: HTMLElement | null = null;
 
 
 	async onload()
@@ -24,9 +24,20 @@ export default class CuriePlugin extends Plugin
 		// Initialize sync engine
 		this.syncEngine = new CurieSyncEngine(this.app, this);
 
-		// Status Bar Item
-		this.statusBarItem = this.addStatusBarItem();
-		this.statusBarItem.setText("Curie: Idle");
+		// Status Bar Item (desktop only - guarded for mobile compatibility)
+		try
+		{
+			this.statusBarItem = this.addStatusBarItem();
+			if (this.statusBarItem)
+			{
+				this.statusBarItem.setText("Curie: Idle");
+			}
+		}
+		catch (err)
+		{
+			// Status bar not available on mobile
+			this.statusBarItem = null;
+		}
 
 		// Register file events
 		this.registerEvent(this.app.vault.on("modify", (file: TFile) =>
@@ -96,6 +107,42 @@ export default class CuriePlugin extends Plugin
 			}
 		);
 		ribbonIconEl.addClass("curie-ribbon-icon");
+
+		// Register commands (available in Command Palette, Mobile Toolbar, and Quick Actions)
+		this.addCommand({
+			id: "curie-open-dashboard",
+			name: "Open Curie Dashboard",
+			callback: () =>
+			{
+				new CurieDashboardModal(this.app, this).open();
+			},
+		});
+
+		this.addCommand({
+			id: "curie-sync-now",
+			name: "Sync Vault Now",
+			callback: async () =>
+			{
+				if (this.settings.deviceToken && this.settings.vaultId)
+				{
+					new Notice("Curie: Starting sync...");
+					try
+					{
+						await this.syncEngine.fullSync();
+						new Notice("Curie: Vault sync complete!");
+					}
+					catch (err: any)
+					{
+						new Notice(`Curie sync failed: ${err.message}`);
+					}
+				}
+				else
+				{
+					new Notice("Curie: Please log in to sync.");
+					new CurieOnboardingModal(this.app, this).open();
+				}
+			},
+		});
 	}
 
 	onunload()
@@ -115,29 +162,29 @@ export default class CuriePlugin extends Plugin
 	}
 
 
-	// Status Bar Updates
+	// Status Bar Updates (optional-chained for mobile)
 	setStatusIdle()
 	{
-		this.statusBarItem.setText("Curie: Idle ⚪");
+		this.statusBarItem?.setText("Curie: Idle ⚪");
 	}
 
 	setStatusSyncing()
 	{
-		this.statusBarItem.setText("Curie: Syncing 🟡");
+		this.statusBarItem?.setText("Curie: Syncing 🟡");
 	}
 
 	setStatusConnected()
 	{
-		this.statusBarItem.setText("Curie: Connected 🟢");
+		this.statusBarItem?.setText("Curie: Connected 🟢");
 	}
 
 	setStatusDisconnected()
 	{
-		this.statusBarItem.setText("Curie: Disconnected ⚪");
+		this.statusBarItem?.setText("Curie: Disconnected ⚪");
 	}
 
 	setStatusError()
 	{
-		this.statusBarItem.setText("Curie: Error 🔴");
+		this.statusBarItem?.setText("Curie: Error 🔴");
 	}
 }

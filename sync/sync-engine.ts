@@ -1,4 +1,4 @@
-import { App, TFile } from "obsidian";
+import { App, TFile, Platform } from "obsidian";
 import CuriePlugin from "../main";
 import { CurieApiClient, Server } from "../api/client";
 import { hashString } from "../util/hashing";
@@ -52,8 +52,17 @@ export class CurieSyncEngine
         {
             try
             {
+                const platformLabel = Platform.isIosApp
+                    ? "Obsidian iOS"
+                    : Platform.isAndroidApp
+                    ? "Obsidian Android"
+                    : Platform.isMacOS
+                    ? "Obsidian macOS"
+                    : "Obsidian Desktop";
+                const deviceName = `${platformLabel} (${this.app.vault.getName()})`;
+
                 const res = await this.api.registerDevice(
-                    "Obsidian Desktop",
+                    deviceName,
                     this.plugin.settings.setupKey
                 );
 

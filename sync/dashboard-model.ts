@@ -1,4 +1,4 @@
-import { App, Modal, Notice, Setting } from "obsidian";
+import { App, Modal, Notice, Setting, Platform } from "obsidian";
 import CuriePlugin from "../main";
 import { CurieOnboardingModal } from "../ui/onboarding-modal";
 import { VaultDto } from "../api/dtos/vault";
@@ -114,9 +114,17 @@ export class CurieDashboardModal extends Modal
         userRow.createEl("strong", { text: "Account: " });
         userRow.appendText(this.plugin.settings.userEmail || "Signed In");
 
+        const platformLabel = Platform.isIosApp
+            ? "Obsidian iOS"
+            : Platform.isAndroidApp
+            ? "Obsidian Android"
+            : Platform.isMacOS
+            ? "Obsidian macOS"
+            : "Obsidian Desktop";
+
         const deviceRow = card.createEl("p");
         deviceRow.createEl("strong", { text: "Device: " });
-        deviceRow.appendText(`Obsidian (${this.app.vault.getName()})`);
+        deviceRow.appendText(`${platformLabel} (${this.app.vault.getName()})`);
 
         const vaultRow = card.createEl("p");
         vaultRow.createEl("strong", { text: "Linked Vault: " });
@@ -208,12 +216,28 @@ export class CurieDashboardModal extends Modal
             text: "Log Out / Disconnect",
             cls: "mod-warning",
         });
+
+        let confirmPending = false;
+        let confirmTimer: number | null = null;
+
         disconnectBtn.onclick = async () =>
         {
-            const confirmed = window.confirm(
-                "Are you sure you want to disconnect this vault from Curie? Your local notes will remain untouched, but background sync will stop."
-            );
-            if (!confirmed) return;
+            if (!confirmPending)
+            {
+                confirmPending = true;
+                disconnectBtn.setText("Tap Again to Confirm Disconnect");
+                confirmTimer = window.setTimeout(() =>
+                {
+                    confirmPending = false;
+                    disconnectBtn.setText("Log Out / Disconnect");
+                }, 4000);
+                return;
+            }
+
+            if (confirmTimer)
+            {
+                window.clearTimeout(confirmTimer);
+            }
 
             this.plugin.syncEngine.stop();
             this.plugin.settings.deviceToken = null;
