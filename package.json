@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"name": "project-curie-sync",
+	"version": "0.3.0",
+	"description": "Sync your Obsidian vault with a Project Curie virtual vault via Fastify backend.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
